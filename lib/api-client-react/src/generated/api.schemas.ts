@@ -8,3 +8,54 @@
 export interface HealthStatus {
   status: string;
 }
+
+export type CreateGymLogBodyStatus =
+  (typeof CreateGymLogBodyStatus)[keyof typeof CreateGymLogBodyStatus];
+
+export const CreateGymLogBodyStatus = {
+  went: "went",
+  skipped: "skipped",
+} as const;
+
+export interface CreateGymLogBody {
+  status: CreateGymLogBodyStatus;
+}
+
+export type GymLogStatus = (typeof GymLogStatus)[keyof typeof GymLogStatus];
+
+export const GymLogStatus = {
+  went: "went",
+  skipped: "skipped",
+} as const;
+
+export interface GymLog {
+  id: number;
+  userId: string;
+  date: string;
+  status: GymLogStatus;
+  createdAt: string;
+}
+
+/**
+ * @nullable
+ */
+export type GymStatsTodayStatus =
+  | (typeof GymStatsTodayStatus)[keyof typeof GymStatsTodayStatus]
+  | null;
+
+export const GymStatsTodayStatus = {
+  went: "went",
+  skipped: "skipped",
+} as const;
+
+export interface GymStats {
+  weeklyGoal: number;
+  completed: number;
+  streak: number;
+  /** @nullable */
+  todayStatus: GymStatsTodayStatus;
+}
+
+export interface ErrorResponse {
+  error: string;
+}

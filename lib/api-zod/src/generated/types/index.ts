@@ -6,4 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./createGymLogBody";
+export * from "./createGymLogBodyStatus";
+export * from "./errorResponse";
+export * from "./gymLog";
+export * from "./gymLogStatus";
+export * from "./gymStats";
+export * from "./gymStatsTodayStatus";
 export * from "./healthStatus";

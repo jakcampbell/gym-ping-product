@@ -14,3 +14,24 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Records whether the authenticated user went to or skipped the gym today. Upserts on the current date.
+ * @summary Log today's gym check-in
+ */
+export const CreateGymLogBody = zod.object({
+  status: zod.enum(["went", "skipped"]),
+});
+
+/**
+ * Returns weekly goal, days completed this week, and current streak.
+ * @summary Get weekly gym stats for the current user
+ */
+export const GetGymStatsResponse = zod.object({
+  weeklyGoal: zod.number(),
+  completed: zod.number(),
+  streak: zod.number(),
+  todayStatus: zod
+    .union([zod.literal("went"), zod.literal("skipped"), zod.literal(null)])
+    .nullable(),
+});

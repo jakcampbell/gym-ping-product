@@ -5,18 +5,27 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  CreateGymLogBody,
+  ErrorResponse,
+  GymLog,
+  GymStats,
+  HealthStatus,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +101,167 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Records whether the authenticated user went to or skipped the gym today. Upserts on the current date.
+ * @summary Log today's gym check-in
+ */
+export const getCreateGymLogUrl = () => {
+  return `/api/gym-logs`;
+};
+
+export const createGymLog = async (
+  createGymLogBody: CreateGymLogBody,
+  options?: RequestInit,
+): Promise<GymLog> => {
+  return customFetch<GymLog>(getCreateGymLogUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createGymLogBody),
+  });
+};
+
+export const getCreateGymLogMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGymLog>>,
+    TError,
+    { data: BodyType<CreateGymLogBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createGymLog>>,
+  TError,
+  { data: BodyType<CreateGymLogBody> },
+  TContext
+> => {
+  const mutationKey = ["createGymLog"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createGymLog>>,
+    { data: BodyType<CreateGymLogBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createGymLog(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateGymLogMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createGymLog>>
+>;
+export type CreateGymLogMutationBody = BodyType<CreateGymLogBody>;
+export type CreateGymLogMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Log today's gym check-in
+ */
+export const useCreateGymLog = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGymLog>>,
+    TError,
+    { data: BodyType<CreateGymLogBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createGymLog>>,
+  TError,
+  { data: BodyType<CreateGymLogBody> },
+  TContext
+> => {
+  return useMutation(getCreateGymLogMutationOptions(options));
+};
+
+/**
+ * Returns weekly goal, days completed this week, and current streak.
+ * @summary Get weekly gym stats for the current user
+ */
+export const getGetGymStatsUrl = () => {
+  return `/api/gym-logs/stats`;
+};
+
+export const getGymStats = async (options?: RequestInit): Promise<GymStats> => {
+  return customFetch<GymStats>(getGetGymStatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetGymStatsQueryKey = () => {
+  return [`/api/gym-logs/stats`] as const;
+};
+
+export const getGetGymStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getGymStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getGymStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetGymStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getGymStats>>> = ({
+    signal,
+  }) => getGymStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getGymStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetGymStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getGymStats>>
+>;
+export type GetGymStatsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get weekly gym stats for the current user
+ */
+
+export function useGetGymStats<
+  TData = Awaited<ReturnType<typeof getGymStats>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getGymStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetGymStatsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

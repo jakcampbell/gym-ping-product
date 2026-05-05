@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: gym-logs
+    description: Gym check-in log operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /gym-logs:
+    post:
+      operationId: createGymLog
+      tags: [gym-logs]
+      summary: Log today's gym check-in
+      description: Records whether the authenticated user went to or skipped the gym today. Upserts on the current date.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGymLogBody"
+      responses:
+        "201":
+          description: Log created or updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GymLog"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /gym-logs/stats:
+    get:
+      operationId: getGymStats
+      tags: [gym-logs]
+      summary: Get weekly gym stats for the current user
+      description: Returns weekly goal, days completed this week, and current streak.
+      responses:
+        "200":
+          description: Stats retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GymStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +85,55 @@ components:
           type: string
       required:
         - status
-
+    CreateGymLogBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [went, skipped]
+      required:
+        - status
+    GymLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        date:
+          type: string
+        status:
+          type: string
+          enum: [went, skipped]
+        createdAt:
+          type: string
+      required:
+        - id
+        - userId
+        - date
+        - status
+        - createdAt
+    GymStats:
+      type: object
+      properties:
+        weeklyGoal:
+          type: integer
+        completed:
+          type: integer
+        streak:
+          type: integer
+        todayStatus:
+          type: ["string", "null"]
+          enum: [went, skipped, null]
+      required:
+        - weeklyGoal
+        - completed
+        - streak
+        - todayStatus
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
